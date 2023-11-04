@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<body>
+<canvas id="ByamCanvas" width="1000" height="500"></canvas>
+<div class="ByamColor">이번 게임의 뱀 색입니다.</div>
+<button id="BackgroundColor">Background Color</button>
+<script>
+    // 전역변수
+    const canvas = document.getElementById('ByamCanvas');
+    const context = canvas.getContext('2d');
+    var mouseX = 0;
+    var mouseY = 0;
+    var Player = [];
+    const minSize = 5; // 원의 최소 크기
+    var currentSize = 20; // 현재 원의 크기
+
+    const randomColor = generateRandomColor();
+    const backgroundColorButton = document.getElementById('BackgroundColor');
+    const div = document.querySelector('.ByamColor');
+    div.style.color = randomColor; // 텍스트 컬러를 랜덤 컬러로 초기화
+
+    // 캔버스 디폴트
+    let isBlack = false;
+    canvas.style.border = '1px solid black';
+
+
+    // 백그라운드 컬러 변경 버튼 이벤트 핸들러
+    backgroundColorButton.addEventListener('click', function () {
+    isBlack = !isBlack;
+    if (isBlack) {
+        document.body.style.backgroundColor = 'black';
+        canvas.style.border = '1px solid white';
+    } else {
+        document.body.style.backgroundColor = 'white';
+        canvas.style.border = '1px solid black';
+    }
+});
+
+// 클래스
+class PlayerBody {
+    constructor() {
+        this.PosX = 100;
+    this.PosY = 100;
+    this.DirX = 0;
+    this.DirY = 0;
+    this.Speed = 5;
+    this.Size = currentSize;
+    currentSize = Math.max(minSize, currentSize - 0.5); // 크기를 조절
+    this.targetPlayer = null;
+  }
+
+  Update() {
+    if (this.targetPlayer) {
+      let distance = this.Size + this.targetPlayer.Size * 2 / 3;
+      this.DirX = this.targetPlayer.PosX - this.PosX;
+      this.DirY = this.targetPlayer.PosY - this.PosY;
+      let scalar = Math.sqrt(this.DirX ** 2 + this.DirY ** 2);
+      if (scalar > distance) {
+        this.DirX /= scalar;
+        this.DirY /= scalar;
+      } else {
+        this.DirX = 0;
+        this.DirY = 0;
+      }
+    } else {
+      this.DirX = mouseX - this.PosX;
+      this.DirY = mouseY - this.PosY;
+      let scalar = Math.sqrt((this.DirX * this.DirX) + (this.DirY * this.DirY));
+      this.DirX /= scalar;
+      this.DirY /= scalar;
+    }
+
+    this.PosX += this.DirX * this.Speed;
+    this.PosY += this.DirY * this.Speed;
+  }
+
+  Draw() {
+    context.beginPath();
+    context.arc(this.PosX, this.PosY, this.Size, 0, 2 * Math.PI);
+    context.fillStyle = randomColor;
+    context.fill();
+    context.closePath();
+  }
+}
+
+// 마우스 이벤트
+addEventListener('mousemove', onMousemove);
+function onMousemove(event) {
+  mouseX = event.clientX - canvas.getBoundingClientRect().left;
+  mouseY = event.clientY - canvas.getBoundingClientRect().top;
+}
+
+addEventListener('click', onClick);
+function onClick(event) {
+  const newPlayer = new PlayerBody();
+
+  if (Player.length > 0) {
+    newPlayer.targetPlayer = Player[Player.length - 1];
+  }
+
+  Player.push(newPlayer);
+  console.log(Player.length);
+}
+
+// 랜덤한 색상코드
+function generateRandomColor() {
+    const randomHex = Math.floor(Math.random() * 4095).toString(16).toUpperCase();
+    const colorCode = '#' + (randomHex.length === 1 ? '00' + randomHex : randomHex.length === 2 ? '0' + randomHex : randomHex);
+    return colorCode;
+}
+
+// 게임 루프
+setInterval(gameLoop, 1000 / 60);
+function gameLoop() {
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  for (let i = 0; i < Player.length; i++) {
+    Player[i].Update();
+    Player[i].Draw();
+  }
+}
+</script>
+</body>
+</html>
